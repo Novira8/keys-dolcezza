@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Case study: a two-language website and a Telegram bot for a home cake studio in Italy.">
+<title>Dolcezza: сайт и бот</title>
+<style>
+  /* Витрина кейса: холст 1920×1080, на широком экране масштабируется целиком, на телефоне — колонка.
+     Палитра сайта Dolcezza: слоновая кость, сирень, золото. Устроено как кейс bubble ICE. */
+  :root{
+    color-scheme:light;
+    --ivory:#F7F2EA; --ivory-2:#EFE6F4; --lilac:#C9B2E0; --violet:#6E4A9E; --violet-deep:#3E2560;
+    --gold:#B8955A; --gold-soft:#D9C29A;
+    --ink:#2B1F38; --ink-soft:#5E5070; --edge:rgba(110,74,158,.18);
+    --f-body:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    --f-display:Georgia,"Times New Roman",serif;
+    --f-mono:ui-monospace,Consolas,Menlo,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--ivory);color:var(--ink);font-family:var(--f-body)}
+
+  .stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;
+    background:
+      radial-gradient(900px 640px at 78% 30%, rgba(201,178,224,.55), transparent 65%),
+      radial-gradient(700px 520px at 0% 100%, rgba(217,194,154,.25), transparent 60%),
+      linear-gradient(135deg,#FBF8F3 0%,var(--ivory) 45%,var(--ivory-2) 100%);
+    display:grid;grid-template-columns:640px 1fr;gap:40px;padding:78px 80px 78px 100px}
+  .stage::after{content:'';position:absolute;inset:28px;border:1px solid rgba(184,149,90,.35);border-radius:28px;pointer-events:none}
+
+  .left{display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;min-width:0}
+  .tag{font-family:var(--f-mono);font-size:18px;font-weight:600;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold);margin-bottom:30px;display:flex;align-items:center;gap:16px}
+  .tag::before{content:'';width:46px;height:1px;background:var(--gold)}
+  h1{font-size:54px;line-height:1.1;font-weight:300;letter-spacing:-.5px;margin-bottom:8px;text-wrap:balance}
+  .brand{font-family:var(--f-display);font-style:italic;font-size:80px;line-height:1.05;color:var(--violet);margin-bottom:28px}
+  .role{font-size:23px;line-height:1.5;color:var(--ink-soft);max-width:32ch;margin-bottom:42px;font-weight:300}
+  .role b{color:var(--ink);font-weight:600}
+  .facts{display:flex;flex-direction:column;border-top:1px solid var(--edge)}
+  .f{display:flex;align-items:center;gap:26px;padding:18px 0;border-bottom:1px solid var(--edge)}
+  .f .n{font-family:var(--f-display);font-size:40px;color:var(--violet);min-width:200px;line-height:1}
+  .f .t{font-size:21px;line-height:1.35}
+  .f .t .m{display:block}
+  .f .t .s{display:block;color:var(--ink-soft);font-size:17.5px}
+  .links{display:flex;gap:14px;margin-top:22px;flex-wrap:wrap}
+  .links a{font:600 15px/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:#fff;
+    background:var(--violet);padding:14px 20px;border-radius:30px}
+  .links a+a{background:none;color:var(--violet);box-shadow:inset 0 0 0 1.5px var(--violet)}
+  .links a:focus-visible{outline:2px solid var(--violet);outline-offset:3px}
+  .stage.print .links{display:none}
+  .note{margin-top:26px;font-size:16px;line-height:1.45;color:var(--ink-soft);max-width:44ch}
+
+  .right{display:flex;align-items:center;justify-content:center;gap:34px;position:relative;z-index:2;min-width:0}
+  .ph{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .phone{width:330px;height:714px;border-radius:46px;padding:12px;background:#1E1626;position:relative;
+    box-shadow:0 40px 70px -30px rgba(62,37,96,.55),0 0 0 2px rgba(184,149,90,.55),0 0 0 9px rgba(255,255,255,.55);
+    transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+  .phone::before{content:'';position:absolute;top:22px;left:50%;width:84px;height:22px;margin-left:-42px;border-radius:12px;background:#1E1626;z-index:2}
+  .screen{width:100%;height:100%;border-radius:36px;overflow:hidden;background:#fff;position:relative;padding-top:40px}
+  .screen img{width:100%;display:block}
+  #bot{padding-top:0;background:#1A2026}   /* у скрина бота своя строка состояния телефона */
+  .slot{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;
+    border:3px dashed var(--lilac);border-radius:36px;color:var(--violet);font:600 18px/1.4 var(--f-mono)}
+  .ph:nth-child(2) .phone{transform:translateY(-26px)}
+  .ph:hover .phone{transform:translateY(-14px)}
+  .ph:nth-child(2):hover .phone{transform:translateY(-40px)}
+  .cap{font-family:var(--f-mono);font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--violet-deep);text-align:center}
+  .cap span{display:block;font-family:var(--f-body);letter-spacing:0;text-transform:none;font-size:16px;color:var(--ink-soft);margin-top:6px}
+
+  .lang{position:absolute;top:44px;right:60px;z-index:5;display:flex;gap:4px;padding:4px;border-radius:30px;
+    background:rgba(255,255,255,.7);border:1px solid var(--edge)}
+  .lang button{font:600 14px/1 var(--f-mono);letter-spacing:.14em;color:var(--ink-soft);background:none;border:0;padding:9px 14px;border-radius:24px;cursor:pointer}
+  .lang button[aria-pressed="true"]{background:var(--violet);color:#fff}
+  .lang button:focus-visible{outline:2px solid var(--violet);outline-offset:2px}
+  .stage.print .lang{display:none}
+
+  @media (min-width:900px){ html,body{height:100%;overflow:hidden} }
+  @media (max-width:899px){
+    body{overflow-x:hidden}
+    .stage{position:relative;width:auto;height:auto;transform:none!important;display:flex;flex-direction:column;gap:40px;
+      padding:72px 16px 48px;overflow:hidden}
+    .stage::after{inset:8px;border-radius:18px}
+    .lang{top:18px;right:16px}
+    .lang button{font-size:12px;padding:8px 11px}
+    .tag{font-size:12px;letter-spacing:.24em;margin-bottom:20px;gap:10px}
+    .tag::before{width:28px}
+    h1{font-size:30px}
+    .brand{font-size:50px;margin-bottom:18px}
+    .role{font-size:17px;margin-bottom:26px}
+    .f{gap:16px;padding:14px 0}
+    .f .n{font-size:26px;min-width:120px}
+    .f .t{font-size:17px}
+    .f .t .s{font-size:14.5px}
+    .note{font-size:14px}
+    .right{flex-direction:column;gap:40px}
+    .phone{width:min(300px,80vw);height:auto;aspect-ratio:330/714}
+    .ph:nth-child(2) .phone,.ph:hover .phone,.ph:nth-child(2):hover .phone{transform:none}
+  }
+  @media (prefers-reduced-motion:reduce){ .phone{transition:none} }
+</style>
+
+<div class="stage">
+  <div class="lang" role="group" aria-label="Язык / Language / Lingua">
+    <button type="button" data-lang="ru">RU</button>
+    <button type="button" data-lang="en">EN</button>
+    <button type="button" data-lang="it">IT</button>
+  </div>
+  <div class="left">
+    <div class="tag" data-k="tag"></div>
+    <h1 data-k="h1"></h1>
+    <div class="brand">Dolcezza</div>
+    <div class="role" data-k="role"></div>
+    <div class="facts">
+      <div class="f"><div class="n" data-k="f1n"></div><div class="t"><span class="m" data-k="f1"></span><span class="s" data-k="f1s"></span></div></div>
+      <div class="f"><div class="n" data-k="f2n"></div><div class="t"><span class="m" data-k="f2"></span><span class="s" data-k="f2s"></span></div></div>
+      <div class="f"><div class="n" data-k="f3n"></div><div class="t"><span class="m" data-k="f3"></span><span class="s" data-k="f3s"></span></div></div>
+    </div>
+    <div class="note" data-k="note"></div>
+    <div class="links">
+      <a href="https://novira8.github.io/dolcezza-demo/" target="_blank" rel="noopener" data-k="l1"></a>
+      <a href="https://t.me/DolcezzaTorteBot" target="_blank" rel="noopener" data-k="l2"></a>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="ph"><div class="phone"><div class="screen"><img data-src="top" data-alt="a1"></div></div><div class="cap" data-k="c1"></div></div>
+    <div class="ph"><div class="phone"><div class="screen"><img data-src="calcolo" data-alt="a2"></div></div><div class="cap" data-k="c2"></div></div>
+    <div class="ph"><div class="phone"><div class="screen" id="bot"><img src="img/bot.jpg" data-alt="a3"
+      onerror="this.remove();document.getElementById('bot').insertAdjacentHTML('beforeend','<div class=slot>img/bot.jpg<br>скрин бота</div>')"></div></div><div class="cap" data-k="c3"></div></div>
+  </div>
+</div>
+
+<script>
+  const T = {
+    ru: {
+      title: 'Dolcezza: сайт и бот', tag: 'Кейс · Сайт и Telegram-бот',
+      h1: 'Торты на заказ<br>в Италии',
+      role: '<b>Сайт на двух языках и бот</b>, которые принимают заказ уже с ценой',
+      f1n: 'Два языка', f1: 'итальянский и русский', f1s: 'переключатель — бабочка с торта',
+      f2n: 'Сразу цена', f2: 'калькулятор на сайте и в боте', f2s: 'заказ уходит в WhatsApp уже заполненным',
+      f3n: '13 тортов', f3: 'каталог в боте из таблицы', f3s: 'хозяйка добавляет торт сама',
+      note: 'Демо, сделанное бесплатно для настоящей домашней кондитерской: цены, фото и отзывы настоящие. Не оплаченный заказ.',
+      c1: 'Первый экран<span>что, где и для кого</span>', c2: 'Калькулятор<span>вес, вариант, срочность</span>', c3: 'Telegram-бот<span>каталог и заказ кнопками</span>',
+      l1: 'Открыть сайт', l2: 'Открыть бота', a1: 'Первый экран сайта Dolcezza на телефоне', a2: 'Калькулятор стоимости торта на сайте', a3: 'Telegram-бот Dolcezza'
+    },
+    en: {
+      title: 'Dolcezza: website and bot', tag: 'Case study · Website + Telegram bot',
+      h1: 'Custom cakes<br>in Italy',
+      role: '<b>A two-language website and a bot</b> that take the order with the price already in it',
+      f1n: 'Two languages', f1: 'Italian and Russian', f1s: 'the switch is a butterfly from her cake',
+      f2n: 'Price at once', f2: 'calculator on the site and in the bot', f2s: 'the order reaches WhatsApp already filled in',
+      f3n: '13 cakes', f3: 'bot catalog from a spreadsheet', f3s: 'the owner adds new cakes herself',
+      note: 'A demo made free of charge for a real home bakery: prices, photos and reviews are real. Not a paid order.',
+      c1: 'First screen<span>what, where and for whom</span>', c2: 'Calculator<span>weight, version, urgency</span>', c3: 'Telegram bot<span>catalog and ordering with buttons</span>',
+      l1: 'Open the website', l2: 'Open the bot', a1: 'Dolcezza website first screen on a phone', a2: 'Cake price calculator on the website', a3: 'Dolcezza Telegram bot'
+    },
+    it: {
+      title: 'Dolcezza: sito e bot', tag: 'Caso studio · Sito + bot Telegram',
+      h1: 'Torte su ordinazione<br>in Italia',
+      role: '<b>Un sito in due lingue e un bot</b> che ricevono l’ordine con il prezzo già calcolato',
+      f1n: 'Due lingue', f1: 'italiano e russo', f1s: 'il selettore è una farfalla della torta',
+      f2n: 'Prezzo subito', f2: 'calcolatore sul sito e nel bot', f2s: 'l’ordine arriva su WhatsApp già compilato',
+      f3n: '13 torte', f3: 'catalogo del bot da una tabella', f3s: 'la titolare aggiunge le torte da sola',
+      note: 'Demo realizzata gratuitamente per un vero laboratorio di torte: prezzi, foto e recensioni sono reali. Non è un lavoro pagato.',
+      c1: 'Prima schermata<span>cosa, dove e per chi</span>', c2: 'Calcolatore<span>peso, versione, urgenza</span>', c3: 'Bot Telegram<span>catalogo e ordine con i pulsanti</span>',
+      l1: 'Apri il sito', l2: 'Apri il bot', a1: 'Prima schermata del sito Dolcezza sul telefono', a2: 'Calcolatore del prezzo della torta sul sito', a3: 'Bot Telegram di Dolcezza'
+    }
+  };
+  // снимки сайта на языке витрины (итальянский сайт для EN — основной язык сайта)
+  const SITE = { ru: 'ru', en: 'it', it: 'it' };
+
+  const stage = document.querySelector('.stage');
+  function setLang(l){
+    if (!T[l]) l = 'en';
+    const d = T[l];
+    document.documentElement.lang = l;
+    document.title = d.title;
+    document.querySelectorAll('[data-k]').forEach(el => el.innerHTML = d[el.dataset.k]);
+    document.querySelectorAll('[data-alt]').forEach(el => el.alt = d[el.dataset.alt]);
+    document.querySelectorAll('img[data-src]').forEach(el => el.src = `img/site_${SITE[l]}_${el.dataset.src}.jpg`);
+    document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === l));
+    try { localStorage.setItem('dolcezza-keys-lang', l); } catch (e) {}
+  }
+  document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => {
+    setLang(b.dataset.lang);
+    try { history.replaceState(null, '', '#' + b.dataset.lang); } catch (e) {}
+  }));
+  let start = location.hash.slice(1);
+  if (!T[start]) { try { start = localStorage.getItem('dolcezza-keys-lang'); } catch (e) {} }
+  setLang(start);
+  if (location.search.includes('print')) stage.classList.add('print');
+
+  function fit(){
+    if (innerWidth < 900) { stage.style.transform = ''; return; }
+    const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+    stage.style.transform = `translate(${(innerWidth - 1920 * k) / 2}px, ${(innerHeight - 1080 * k) / 2}px) scale(${k})`;
+  }
+  addEventListener('resize', fit); fit();
+</script>
