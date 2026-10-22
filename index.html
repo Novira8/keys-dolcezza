@@ -124,7 +124,7 @@
   <div class="right">
     <div class="ph"><div class="phone"><div class="screen"><img data-src="top" data-alt="a1"></div></div><div class="cap" data-k="c1"></div></div>
     <div class="ph"><div class="phone"><div class="screen"><img data-src="calcolo" data-alt="a2"></div></div><div class="cap" data-k="c2"></div></div>
-    <div class="ph"><div class="phone"><div class="screen" id="bot"><img src="img/bot.jpg" data-alt="a3"
+    <div class="ph"><div class="phone"><div class="screen" id="bot"><img data-bot data-alt="a3"
       onerror="this.remove();document.getElementById('bot').insertAdjacentHTML('beforeend','<div class=slot>img/bot.jpg<br>скрин бота</div>')"></div></div><div class="cap" data-k="c3"></div></div>
   </div>
 </div>
@@ -177,6 +177,7 @@
     document.querySelectorAll('[data-k]').forEach(el => el.innerHTML = d[el.dataset.k]);
     document.querySelectorAll('[data-alt]').forEach(el => el.alt = d[el.dataset.alt]);
     document.querySelectorAll('img[data-src]').forEach(el => el.src = `img/site_${SITE[l]}_${el.dataset.src}.jpg`);
+    document.querySelectorAll('img[data-bot]').forEach(el => el.src = `img/bot_${SITE[l]}.jpg`);
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === l));
     try { localStorage.setItem('dolcezza-keys-lang', l); } catch (e) {}
   }
